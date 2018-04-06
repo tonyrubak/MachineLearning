@@ -1,5 +1,5 @@
 module TextVectorizer
-export Vectorizer, fit_vectorizer, row_transform, transform
+export Vectorizer, fit_vectorizer, transform
 
 struct Vectorizer{T<:Set, V<:Dict}
     vocabulary::T
@@ -22,7 +22,7 @@ fit_vectorizer = function(documents::Array{Array{SubString{String},1},1})
             end
         end
     end
-    Vectorizer{Set{String},Dict{String,Int64}}(vocab, dfs, idxs)
+    Vectorizer(vocab, dfs, idxs)
 end
 
 row_transform = function(vectorizer, document)
