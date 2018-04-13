@@ -34,7 +34,7 @@ row_transform = function(vectorizer, document)
     row
 end
 
-transform = function(vectorizer, documents)
+function transform(vectorizer, documents)
     hcat(sparse(row_transform.(vectorizer, documents))...)'
 end
 end
