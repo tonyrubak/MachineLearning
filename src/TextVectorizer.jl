@@ -7,16 +7,15 @@ struct Vectorizer{T<:Dict}
 end
 
 function fit_vectorizer(documents::Array{Array{SubString{String},1},1})
-    vocab = Set{String}()
     idxs = Dict{String, Int64}()
     dfs = Vector{Int64}()
     for doc in documents
         for word in doc
-            if !(haskey(idxs, word))
+            idx = get(idxs, word, 0)
+            if idx == 0
                 push!(dfs, 1)
                 idxs[word] = length(dfs)
             else
-                idx = idxs[word]
                 dfs[idx] += 1
             end
         end
@@ -25,7 +24,7 @@ function fit_vectorizer(documents::Array{Array{SubString{String},1},1})
 end
 
 function row_transform(vectorizer, document)
-    row = zeros(Int64, length(vectorizer.dfs))
+    row = spzeros(Int64, length(vectorizer.dfs))
     for i in 1:length(document)
         word = document[i]
         idx = get(vectorizer.idxs, word, 0)
@@ -42,6 +41,7 @@ function transform(vectorizer, documents)
 end
 
 function transform_test(vectorizer, documents)
-    @time row_transform(vectorizer, documents[1])
+    # @time row_transform(vectorizer, documents[1])
+    @time transform(vectorizer, documents)
 end
 end
