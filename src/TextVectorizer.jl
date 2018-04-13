@@ -37,4 +37,8 @@ end
 function transform(vectorizer, documents)
     hcat(sparse(row_transform.(vectorizer, documents))...)'
 end
+
+function transform_test(vectorizer, documents)
+    @time row_transform(vectorizer, documents[1])
+end
 end
