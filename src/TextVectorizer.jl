@@ -24,11 +24,14 @@ function fit_vectorizer(documents::Array{Array{SubString{String},1},1})
     Vectorizer(dfs, idxs)
 end
 
-row_transform = function(vectorizer, document)
-    row = spzeros(Int64, length(vectorizer.dfs))
-    for word in document
-        if word in vectorizer.vocabulary
-            row[vectorizer.idxs[word]] += 1
+function row_transform(vectorizer, document)
+    row = zeros(Int64, length(vectorizer.dfs))
+    for i in 1:length(document)
+        word = document[i]
+        idx = get(vectorizer.idxs, word, 0)
+        if idx ≠ 0
+            idx = vectorizer.idxs[word]
+            row[idx] += 1
         end
     end
     row
