@@ -6,22 +6,22 @@ struct Vectorizer{T<:Dict}
     idxs::T
 end
 
-fit_vectorizer = function(documents::Array{Array{SubString{String},1},1})
+function fit_vectorizer(documents::Array{Array{SubString{String},1},1})
     vocab = Set{String}()
-    dfs = Dict{String, Int64}()
     idxs = Dict{String, Int64}()
+    dfs = Vector{Int64}()
     for doc in documents
         for word in doc
-            if !(word in vocab)
-                push!(vocab, word)
-                dfs[word] = 1
-                idxs[word] = length(idxs) + 1
+            if !(haskey(idxs, word))
+                push!(dfs, 1)
+                idxs[word] = length(dfs)
             else
-                dfs[word] += 1
+                idx = idxs[word]
+                dfs[idx] += 1
             end
         end
     end
-    Vectorizer(vocab, dfs, idxs)
+    Vectorizer(dfs, idxs)
 end
 
 row_transform = function(vectorizer, document)
