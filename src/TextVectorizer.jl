@@ -1,10 +1,9 @@
 module TextVectorizer
-export Vectorizer, fit_vectorizer, transform
+export Vectorizer, fit_vectorizer, transform, transform_test
 
-struct Vectorizer{T<:Set, V<:Dict}
-    vocabulary::T
-    dfs::V
-    idxs::V
+struct Vectorizer{T<:Dict}
+    dfs::Vector{Int64}
+    idxs::T
 end
 
 fit_vectorizer = function(documents::Array{Array{SubString{String},1},1})
