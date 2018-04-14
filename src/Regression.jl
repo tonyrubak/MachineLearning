@@ -11,4 +11,6 @@ function predict_logistic(model, features)
     1 ./ (1+exp.(-wth))
 end
 
+function feature_deriv_logistic(errors, feature)
+    dot(errors, feature)
 end
