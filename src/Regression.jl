@@ -26,3 +26,9 @@ function compute_log_likelihood_logistic(model, features, output)
     sum((ind - 1) .* scores - logexp)
 end
 
+function fit_logistic(feature_matrix, output, initial_β, step_size, max_iter)
+    for iter in 1:max_iter
+        
+    end
+end
+end
