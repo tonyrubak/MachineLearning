@@ -113,6 +113,10 @@ function decision_tree_create(data, features, target, current_depth = 0, max_dep
     println("--------------------------------------------------------------------")
     println("Subtree, depth = $current_depth ($(length(target_values)) data points).")
 
+    # Check for first three stopping conditions
+    # 1. All data are one class
+    # 2. There are no more features to split on
+    # 3. The tree has reached the maximum depth
     if node_mistakes(data[:, target]) == 0
         println("Stopping condition 1 reached.")
         return create_leaf(target_values)
@@ -125,6 +129,8 @@ function decision_tree_create(data, features, target, current_depth = 0, max_dep
     end
     
     splitting_feature = choose_splitting_feature(data, features, target, Val{method})
+    # Check the fourth stopping condition
+    # 4. No split improves the metric
     if splitting_feature == :none
         println("No information gain. Creating leaf node.")
         return create_leaf(target_values)
