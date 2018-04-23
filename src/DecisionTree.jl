@@ -1,4 +1,5 @@
 module DecisionTree
+using DataFrames
 using DataFramesMeta
 
 export decision_tree_create, classify
@@ -26,7 +27,22 @@ function node_mistakes(labels)
     retval
 end
 
-function choose_splitting_feature(data, features, target)
+function information(labels)
+    retval = 0.
+    n = size(labels)[1]
+    if n ≠ 0
+        num_ones = size(labels[labels .== 1,:])[1]
+        num_nones = size(labels[labels .== -1,:])[1]
+
+        p_ones = num_ones / n
+        p_nones = num_nones / n
+        
+        retval = -(p_ones * log(2, p_ones) + p_nones * log(2, p_nones))
+    end
+    retval
+end
+
+function choose_splitting_feature(data, features, target, ::Type{Val{:Error}})
     best_feature = :none
     best_error = 10.
 
@@ -49,6 +65,34 @@ function choose_splitting_feature(data, features, target)
     best_feature
 end
 
+function choose_splitting_feature(data, features, target, ::Type{Val{:IG}})
+    best_feature = :none
+    best_ig = 0
+
+    n = size(data)[1]
+
+    i₀ = information(data[:,target])
+
+    for feature in features
+        left_split = data[data[feature] .== 0,:]
+        right_split = data[data[feature] .== 1,:]
+
+        n_l = size(left_split)[1]
+        n_r = size(right_split)[1]
+
+        left_information = information(left_split[:,target])
+        right_information = information(right_split[:,target])
+
+        ig = i₀ - n_l/n * left_information + n_r/n * right_information
+
+        if ig > best_ig
+            best_feature = feature
+            best_ig = ig
+        end
+    end
+    best_feature
+end
+
 function create_leaf(values)
     pred = 0
     num_ones = length(values[values .== 1,:])
@@ -62,7 +106,7 @@ function create_leaf(values)
     LeafNode(pred)
 end
 
-function decision_tree_create(data, features, target, current_depth = 0, max_depth = 10)
+function decision_tree_create(data, features, target, current_depth = 0, max_depth = 10, method = :IG)
     remaining_features = copy(features)
     target_values = data[:, target]
 
@@ -80,7 +124,11 @@ function decision_tree_create(data, features, target, current_depth = 0, max_dep
         return create_leaf(target_values)
     end
     
-    splitting_feature = choose_splitting_feature(data, features, target)
+    splitting_feature = choose_splitting_feature(data, features, target, Val{method})
+    if splitting_feature == :none
+        println("No information gain. Creating leaf node.")
+        return create_leaf(target_values)
+    end
     left_split = data[data[splitting_feature] .== 0,:]
     right_split = data[data[splitting_feature] .== 1,:]
     delete!(remaining_features, splitting_feature)
@@ -96,11 +144,11 @@ function decision_tree_create(data, features, target, current_depth = 0, max_dep
     left_tree = decision_tree_create(left_split, remaining_features,
                                      target,
                                      current_depth + 1,
-                                     max_depth)
+                                     max_depth, method)
     right_tree = decision_tree_create(right_split, remaining_features,
                                       target,
                                       current_depth + 1,
-                                      max_depth)
+                                      max_depth, method)
     return BranchNode(splitting_feature, left_tree, right_tree)
 end
 
@@ -112,7 +160,7 @@ function classify(tree::LeafNode, x, annotate = false)
 end
 
 function classify(tree::BranchNode, x, annotate = false)
-    split_value = x[1,tree.feature]
+    split_value::Int64 = x[tree.feature][1]
     if annotate
         println("Split on $(tree.feature) = $split_value")
     end
