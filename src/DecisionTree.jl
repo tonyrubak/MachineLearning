@@ -123,6 +123,13 @@ function classify(tree::BranchNode, x, annotate = false)
     end
 end
 
+function evaluate{T}(tree::TreeNode{T}, data, target)
+    n = size(data)[1]
+    preds = map(x -> classify(tree, x), eachrow(data))
+    error = preds .* data[:,target]
+    size(error[error .< 0])[1] / n
+end
+
 # @testset "Node Mistakes Tests" begin
     # @test node_mistakes([-1, -1, 1, 1, 1]) == 2
     # @test node_mistakes([-1, -1, 1, 1, 1, 1]) == 2
