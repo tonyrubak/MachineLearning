@@ -1,7 +1,7 @@
 module DecisionTree
 using DataFramesMeta
 
-export decision_tree_create
+export decision_tree_create, classify
 abstract type TreeNode{T} end
 
 struct LeafNode{T} <: TreeNode{T}
@@ -10,8 +10,8 @@ end
 
 struct BranchNode{T} <: TreeNode{T}
     feature::Symbol
-    left_branch::TreeNode{T}
-    right_branch::TreeNode{T}
+    left::TreeNode{T}
+    right::TreeNode{T}
 end
 
 function node_mistakes(labels)
@@ -102,6 +102,25 @@ function decision_tree_create(data, features, target, current_depth = 0, max_dep
                                       current_depth + 1,
                                       max_depth)
     return BranchNode(splitting_feature, left_tree, right_tree)
+end
+
+function classify(tree::LeafNode, x, annotate = false)
+    if annotate
+        println("At leaf, predicting $(tree.value)")
+    end
+    return tree.value
+end
+
+function classify(tree::BranchNode, x, annotate = false)
+    split_value = x[1,tree.feature]
+    if annotate
+        println("Split on $(tree.feature) = $split_value")
+    end
+    if split_value == 0
+        return classify(tree.left, x, annotate)
+    else
+        return classify(tree.right, x, annotate)
+    end
 end
 
 # @testset "Node Mistakes Tests" begin
