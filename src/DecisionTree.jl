@@ -2,7 +2,8 @@ module DecisionTree
 using DataFrames
 using DataFramesMeta
 
-export decision_tree_create, classify
+export decision_tree_create, classify, complexity, evaluate
+
 abstract type TreeNode{T} end
 
 struct LeafNode{T} <: TreeNode{T}
