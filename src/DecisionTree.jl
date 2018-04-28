@@ -185,11 +185,13 @@ function decision_tree_create(data, features, target, current_depth = 0,
     left_tree = decision_tree_create(left_split, remaining_features,
                                      target,
                                      current_depth + 1,
-                                     max_depth, method)
+                                     max_depth, min_node_size,
+                                     min_error_reduction, method)
     right_tree = decision_tree_create(right_split, remaining_features,
                                       target,
                                       current_depth + 1,
-                                      max_depth, method)
+                                      max_depth, min_node_size,
+                                      min_error_reduction, method)
     return BranchNode(splitting_feature, left_tree, right_tree)
 end
 
@@ -217,6 +219,14 @@ function evaluate{T}(tree::TreeNode{T}, data, target)
     preds = map(x -> classify(tree, x), eachrow(data))
     error = preds .* data[:,target]
     size(error[error .< 0])[1] / n
+end
+
+function complexity(tree::BranchNode)
+    complexity(tree.left) + complexity(tree.right)
+end
+
+function complexity(tree::LeafNode)
+    1
 end
 
 # @testset "Node Mistakes Tests" begin
