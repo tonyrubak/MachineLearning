@@ -144,23 +144,40 @@ function decision_tree_create(data, features, target, current_depth = 0,
     elseif current_depth ≥ max_depth
         println("Reached maximum depth. Stopping for now.")
         return create_leaf(target_values)
+    elseif minimum_node_size(data, min_node_size) == true
+        println("Reached minimum node size.")
+        return create_leaf(target_values)
     end
     
     splitting_feature = choose_splitting_feature(data, features, target, Val{method})
-    # Check the fourth stopping condition
-    # 4. No split improves the metric
-    if splitting_feature == :none
+
+    # Check the third early stopping condition
+    # 3. No split improves the metric
+    if method == :IG && splitting_feature == :none
         println("No information gain. Creating leaf node.")
         return create_leaf(target_values)
     end
+    
     left_split = data[data[splitting_feature] .== 0,:]
     right_split = data[data[splitting_feature] .== 1,:]
+
+    # Check the third early stopping condition
+    # 3. Minimum error reduction
+    error_before_split = node_mistakes(target_values) / n
+    left_mistakes = node_mistakes(left_split[:,target])
+    right_mistakes = node_mistakes(right_split[:,target])
+    error_after_split = (left_mistakes + right_mistakes) / n
+    if error_reduction(error_before_split, error_after_split) < min_error_reduction
+        println("Minimum error reduction reached.")
+        return create_leaf(target_values)
+    end
+    
     delete!(remaining_features, splitting_feature)
     println("Splitting on $splitting_feature")
-    if size(left_split)[1] == size(data)[1]
+    if size(left_split)[1] == n
         println("Creating leaf node")
         return create_leaf(left_split[:, target])
-    elseif size(right_split)[1] == size(data)[1]
+    elseif size(right_split)[1] == n
         println("Creating leaf node")
         return create_leaf(right_split[:, target])
     end
