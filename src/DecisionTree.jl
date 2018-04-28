@@ -107,17 +107,34 @@ function create_leaf(values)
     LeafNode(pred)
 end
 
-function decision_tree_create(data, features, target, current_depth = 0, max_depth = 10, method = :IG)
+function minimum_node_size(data, min_node_size)
+    if size(data)[1] < min_node_size
+        true
+    else
+        false
+    end
+end
+
+function error_reduction(error_before_split, error_after_split)
+    error_before_split - error_after_split
+end
+
+function decision_tree_create(data, features, target, current_depth = 0,
+                              max_depth = 10, min_node_size = 1,
+                              min_error_reduction = 0.0,  method = :IG)
     remaining_features = copy(features)
     target_values = data[:, target]
+    n = size(data)[1]
 
     println("--------------------------------------------------------------------")
     println("Subtree, depth = $current_depth ($(length(target_values)) data points).")
 
-    # Check for first three stopping conditions
+    # Check for the two base stopping conditions
     # 1. All data are one class
     # 2. There are no more features to split on
-    # 3. The tree has reached the maximum depth
+    # and the first two early stopping conditions
+    # 1. The tree has reached the maximum depth
+    # 2. The node doesn't contain sufficient data points
     if node_mistakes(data[:, target]) == 0
         println("Stopping condition 1 reached.")
         return create_leaf(target_values)
