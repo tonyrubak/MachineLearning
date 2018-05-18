@@ -60,7 +60,7 @@ function fit_logistic_cg(feature_matrix, output, w, λ, max_iter)
         
         preds = predict_logistic(feature_matrix, w)
         errors = indicators .- preds
-        g_n = feature_matrix' * errors
+        g_n = feature_matrix' * errors .- λ*w
         β = g_n' * (g_n .- g) / (u' * (g_n .- g))
         g = g_n
         u = g .- u*β
