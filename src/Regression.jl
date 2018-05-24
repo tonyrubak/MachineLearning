@@ -30,9 +30,9 @@ function compute_log_likelihood_logistic(model, features, output)
     sum((ind .- 1) .* scores .- logexp)
 end
 
-function compute_avg_log_likelihood_logistic(model, features, output)
+function compute_avg_log_likelihood_logistic(weights, features, output)
     ind = map(x -> (x == 1) ? 1 : 0, output)
-    scores = features * model.w
+    scores = features * weights
     logexp = log.(1. + exp.(-scores))
 
     mask = isinf.(logexp)
@@ -93,15 +93,15 @@ function fit_logistic_sgd(feature_matrix, output, w, step_size, batch_size,
 
     base = 1 # Base index for current batch
     for iter in 1:max_iter
-        batch_features = feature_matrix[base:base+batch_size,:]
-        preds = predict_logistic(batch_features, w)
-        errors = inds[base:base+batch_size] .- preds
+        @views batch_features = feature_matrix[base:base+batch_size,:]
+        preds = logit.(-batch_features * w)
+        @views errors = inds[base:base+batch_size] .- preds
         deriv = batch_features' * errors
         w = w .+ (1. / batch_size) * step_size .* deriv
-        @views lp = compute_avg_log_likelihood_logistic(Model(w),
-                                                        batch_features,
-                                                        output[base:base+batch_size])
-        push!(log_ll, lp)
+        lp = compute_avg_log_likelihood_logistic(w,
+                                                 batch_features,
+                                                 output[base:base+batch_size])
+        log_ll[iter] = lp
 
         # If a complete pass was made reshuffle data
         base += batch_size
