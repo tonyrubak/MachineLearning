@@ -18,9 +18,7 @@ end
 
 function node_mistakes(labels)
     retval = 0
-    if length(labels) == 0
-        retval = 0
-    else
+    if length(labels) != 0
         num_ones = size(labels[labels .== 1,:])[1]
         num_nones = size(labels[labels .== -1,:])[1]
         retval = (num_ones ≥ num_nones) ? num_nones : num_ones
@@ -123,7 +121,7 @@ function decision_tree_create(data, features, target, current_depth = 0,
                               max_depth = 10, min_node_size = 1,
                               min_error_reduction = 0.0,  method = :IG)
     remaining_features = copy(features)
-    target_values = data[:, target]
+    target_values = data[target]
     n = size(data)[1]
 
     println("--------------------------------------------------------------------")
@@ -135,7 +133,7 @@ function decision_tree_create(data, features, target, current_depth = 0,
     # and the first two early stopping conditions
     # 1. The tree has reached the maximum depth
     # 2. The node doesn't contain sufficient data points
-    if node_mistakes(data[:, target]) == 0
+    if node_mistakes(data[target]) == 0
         println("Stopping condition 1 reached.")
         return create_leaf(target_values)
     elseif remaining_features == []
@@ -217,7 +215,7 @@ end
 function evaluate(tree::TreeNode, data, target)
     n = size(data)[1]
     preds = map(x -> classify(tree, x), eachrow(data))
-    error = preds .* data[:,target]
+    error = preds .* data[target]
     size(error[error .< 0])[1] / n
 end
 
@@ -261,8 +259,8 @@ function weighted_splitting_feature(data, features, target, weights)
         right_split = data[data[feature] .== 1,:]
         left_wts = weights[data[feature] .== 0,:]
         right_wts = weights[data[feature] .== 1,:]
-        error = (node_mistakes_weighted(left_split, left_wts)[1] +
-            node_mistakes_weighted(right_split, right_wts)[1]) /
+        error = (node_mistakes_weighted(left_split[target], left_wts)[1] +
+            node_mistakes_weighted(right_split[target], right_wts)[1]) /
             sum(weights)
         if error < best_error
             best_feature = feature
@@ -280,7 +278,7 @@ end
 function weighted_decision_tree_create(data, features, target, weights,
                               current_depth = 0, max_depth = 10)
     remaining_features = copy(features)
-    target_values = data[:, target]
+    target_values = data[target]
     n = size(data)[1]
 
     println("--------------------------------------------------------------------")
@@ -291,7 +289,7 @@ function weighted_decision_tree_create(data, features, target, weights,
     # 2. There are no more features to split on
     # and the early stopping conditions
     # 1. The tree has reached the maximum depth
-    if node_mistakes_weighted(data[:, target], weights)[1] <= 1e-15
+    if node_mistakes_weighted(data[target], weights)[1] <= 1e-15
         println("Stopping condition 1 reached.")
         return create_leaf(target_values, weights)
     elseif remaining_features == []
@@ -305,7 +303,7 @@ function weighted_decision_tree_create(data, features, target, weights,
     splitting_feature = weighted_splitting_feature(data, features,
                                                    target, weights)
     delete!(remaining_features, splitting_feature)
-    
+
     left_split = data[data[splitting_feature] .== 0,:]
     left_weights = weights[data[splitting_feature] .== 0,:]
     right_split = data[data[splitting_feature] .== 1,:]
@@ -338,7 +336,7 @@ function adaboost(data, features, target, num_stumps)
     alpha = repeat([1.], inner = size(data)[1])
     weights = []
     tree_stumps = []
-    values = data[:,target]
+    values = data[target]
 
     for t in 1:num_stumps
         println("=====================================================")
@@ -375,5 +373,12 @@ function predict(weights, stumps, data)
     end
 
     map(x -> x > 0 ? 1 : -1, scores)
+end
+
+function evaluate(weights, stumps, data, target)
+    n = size(data)[1]
+    preds = predict(weights, stumps, data)
+    error = preds .* data[target]
+    size(error[error .< 0])[1] / n
 end
 end
